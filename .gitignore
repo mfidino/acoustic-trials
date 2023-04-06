@@ -127,3 +127,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+.Rproj.user
+
+# mixit models
+/bird_mixit_model_checkpoints
