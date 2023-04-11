@@ -129,5 +129,9 @@ dmypy.json
 .pyre/
 .Rproj.user
 
+*.Rhistory
+
 # mixit models
 /bird_mixit_model_checkpoints
+
+/audio
