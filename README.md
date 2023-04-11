@@ -29,7 +29,7 @@ pip install resampy
 
 ### Setup
 
-Right now, we are going to assume we have a sub-folder titled `audio`, which will contain the wave files. In this case, we will assume that all the files are from a single location.
+Right now, we are going to assume we have a sub-folder titled `small_audio`, which will contain the wave files. For this example I trimmed down the 10-15 minute files to just the first 30 seconds as a proof of concept.
 
 ### Step 1. Some initial cleaning of audio files
 
