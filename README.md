@@ -100,7 +100,7 @@ and an example of the spectrogram that gets output is
 
 <div align="center"><img width="600" height="auto" src="./snips/CHIL-CTG-04232021/20210423_080000/20210423_080000_21s-24s.jpg" /></div>
 
-### step 4. Stitching it all together
+### Step 4. Stitching it all together
 
 Really the only thing that needs to get pointed at is a folder to start from, everything else functions off of that. The script in the main repo called `do_all.py` does steps 1 through 3.
 
@@ -108,14 +108,16 @@ Really the only thing that needs to get pointed at is a folder to start from, ev
 python do_all.py --input_folder small_audio/CHIL-CTG-04232021
 ```
 
-### Next steps.
+### Moving forward
 
-There are quite a few variables throughout this that are hard-coded, or pulled off of the `--input_folder` argument. When interfacing with the UWIN web app a number of these bits of information can actually be pulled from specific tables in the database, namely to date & time of a visit to a given location as well as that locations coordinates. I've also used a file naming structure for the folders that is similar to the way the web app names buckets on google cloud. Finally, after the ML outputs are collected we really don't need to store all of the seperated 'tracks.' What we really just need are:
+There are quite a few variables throughout this that are hard-coded, or pulled off of the `--input_folder` argument. When interfacing with the UWIN web app a number of these bits of information can actually be pulled from specific tables in the database, namely to date & time of a visit to a given location as well as that locations coordinates. I've also used a file naming structure for the folders that is similar to the way the web app names buckets on google cloud. Finally, after the ML outputs are collected we really don't need to store all of the separated 'tracks.' What we really just need are:
 
 1. The original soundfile stored in the coldest of cold storages.
-2. The small bits of soundfiles that are the species detections stored in something that can possibly be verified by a user. 
-3. The spectrograms that are associated to those soundfiles as well so there is a visual as well as an auditory representation.
+2. The small bits of soundfiles that are the species detections stored in something that can possibly be verified by a user. In this example these are getting stored in a snips sub-folder
+3. The spectrograms that are associated to those soundfiles as well so there is a visual as well as an auditory representation. In this example these are getting stored in the snips sub--folder.
 
 I built this script with the thought in mind that the function would get called once a user tells them to apply all the ML to a given visit. That being said, it may make sense to be able to batch process them by having a user select those across a given time range (e.g., a month). We should also
-keep track of whether or not a given batch of files have completed the ML pipeline so that we can ensure they are not sent through it again (as that could add up).
+keep track of whether or not a given batch of files have completed the ML pipeline so that we can ensure they are not sent through it again (as that could add up). 
+
+I am positive there is other stuff I am missing here, but at a minimum these scripts are at least a proof of concept that this pipeline works.
 
