@@ -1,34 +1,35 @@
-import requests
-import json
 import os
 import dropbox
 
-DROPBOX_API_KEY = os.environ.get("DROPBOX_API_KEY")
-type(DROPBOX_API_KEY)
-print(DROPBOX_API_KEY)
+DROPBOX_KEY = os.environ.get("DROPBOX_KEY")
 
-shared_link = 'https://www.dropbox.com/sh/usqs9geu79sr782/AAA_RoFmnvimAPm7V3QXT0-ha?dl=0'
+dbx = dropbox.Dropbox(DROPBOX_KEY)
 
-response = requests.post(
-    'https://api.dropboxapi.com/2/sharing/get_shared_link_metadata',
-    headers={
-        'Authorization': f'Bearer {DROPBOX_API_KEY}',
-        'Content-Type': 'application/json'
-    },
-    json={
-        'url': shared_link,
-        'path': ''
-    }
-)
+link_string = 'https://www.dropbox.com/sh/usqs9geu79sr782/AADa68cEF9WpVC4Yj24KjW9Ra/Chicago%2C%20IL?dl=0&subfolder_nav_tracking=1'
+link = dropbox.files.SharedLink(url=link_string)
 
-response.raise_for_status()
+path = "/Late uploads"
 
-metadata = response.json()
+download_path = "D:/acoustics/CHIL"
+entries = dbx.files_list_folder(path=path, shared_link=link).entries
+for entry in entries:
+    tmp_path = f"{path}/{entry.name}"
+    tmp_entries = dbx.files_list_folder(path=tmp_path, shared_link=link).entries
+    # check to create folder if needed
+    to_save = f"{download_path}{tmp_path}"
+    if os.path.exists(to_save):
+        print(f"{to_save} already exists, moving to next")
+        continue
+    os.makedirs(to_save)
+    print(to_save)
+    for tmp_entry in tmp_entries:
+        if isinstance(tmp_entry, dropbox.files.FileMetadata):
+            dropbox_path = f"{tmp_path}/{tmp_entry.name}"
+            tmp_file_path = f"{download_path}{tmp_path}/{tmp_entry.name}"
+            output_file = open(tmp_file_path, "wb")
+            metadata, res = dbx.sharing_get_shared_link_file(url=link_string, path=dropbox_path)
+            output_file.write(res.content)
+            output_file.close()
+            print(f"{tmp_entry.name} downloaded successfully")
 
-if metadata['is_downloadable']:
-    # The shared link is valid and the content is downloadable
-    print("The shared link is valid and the content is downloadable.")
-else:
-    # The shared link is not valid or the content is not downloadable
-    print("The shared link is not valid or the content is not downloadable.")
-
+# https://www.dropboxforum.com/t5/Dropbox-API-Support-Feedback/Get-refresh-token-from-access-token/td-p/596739
