@@ -5,12 +5,12 @@ DROPBOX_KEY = os.environ.get("DROPBOX_KEY")
 
 dbx = dropbox.Dropbox(DROPBOX_KEY)
 
-link_string = 'https://www.dropbox.com/sh/usqs9geu79sr782/AADa68cEF9WpVC4Yj24KjW9Ra/Chicago%2C%20IL?dl=0&subfolder_nav_tracking=1'
+link_string = 'https://www.dropbox.com/sh/usqs9geu79sr782/AAC1NsloK1cgLD_ai4IkxN06a/Jackson%2C%20MS?dl=0&subfolder_nav_tracking=1'
 link = dropbox.files.SharedLink(url=link_string)
 
 path = "/Late uploads"
 
-download_path = "D:/acoustics/CHIL"
+download_path = "D:/acoustics/JAMS"
 entries = dbx.files_list_folder(path=path, shared_link=link).entries
 for entry in entries:
     tmp_path = f"{path}/{entry.name}"
