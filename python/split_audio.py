@@ -3,9 +3,6 @@ import os
 import numpy as np
 import soundfile as sf
 
-path = 'E:\\BirdClef_2023\\birdclef-2023\\train_audio\\'
-
-
 # create an argument parser
 parser = argparse.ArgumentParser(description="Rename files with a .WAV extension to .wav")
 parser.add_argument("--input_folder", type=str, help="the folder containing the files to rename")
@@ -26,7 +23,7 @@ def input_files(path):
             if len(f.rsplit('.', 1)) > 1 and f.rsplit('.', 1)[1].lower() in allowed_filetypes:
                 files.append(os.path.join(root, f))
 
-    print(f'{len(files)} files foundin {path}')
+    print(f'{len(files)} files found in {path}')
     return files
 
 def chunk_wav(wav, cut_center, var_win_measure):
@@ -49,7 +46,7 @@ for root, dirs, flist in os.walk(path):
          files = input_files(read_dir_path)
          for f in files:
              print(f)
-             fname = files[0].split('\\')[-1].split('.')[0] 
+             fname = f.split('\\')[-1].split('.')[0]
              wav, sr = sf.read(f)
              clip_length_s = len(wav)/sr
              variance_window = 0.5 
@@ -71,6 +68,8 @@ for root, dirs, flist in os.walk(path):
              #writing clipped wavs
              for i in range(len(cut_points)-1):
                  start = round(cut_points[i]*sr)
+                 if (cut_points[i] > 300):
+                    continue
                  stop = round(cut_points[i+1]*sr)
                  tmp_wav = wav[start:stop]
                  tmp_name = f'{fname}_{cut_points[i]}.wav'

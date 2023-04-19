@@ -49,7 +49,7 @@ if not os.path.exists("small_audio"):
     os.mkdir("small_audio")
 
 # loop over all files and directories in the audio directory
-for dirpath, dirnames, filenames in os.walk("audio"):
+for dirpath, dirnames, filenames in os.walk("D:/uwin_sounds"):
     for filename in filenames:
         if not filename.endswith(".WAV"):
             continue
@@ -63,8 +63,8 @@ for dirpath, dirnames, filenames in os.walk("audio"):
             frame_rate = input_file.getframerate()
             sample_width = input_file.getsampwidth()
 
-            # calculate the number of frames in the first 30 seconds
-            thirty_sec_frames = int(frame_rate * 30)
+            # calculate the number of frames in the first 300 seconds
+            thirty_sec_frames = int(frame_rate * 300)
 
             # read the first 30 seconds of audio data
             input_file.setpos(0)

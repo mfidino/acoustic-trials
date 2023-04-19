@@ -40,8 +40,21 @@ python ./python/WAV2wav.py --input_folder small_audio
 
 ```
 
+### Step 2. Splitting longer audio files into smaller pieces
 
-### Step 2. splitting recordings with `mixit`
+The audiomoths we deploy will record for minutes at a time (in this example they ran for 15 minutes every time they were triggered). This creates an issue with splitting the sound
+file into seperate tracks because there are likely more than 4 distinct sounds that occur
+over the whole length of the file. Consider a morning chorus for birds, there can be many
+species songing all at once! Add in some urban noise and you can see how this can be an
+issue. Given an `input_folder` (where you want the script to search for wav files) and an `output_folder` (where you want the script to save the new files), the script `./python/split_audio.py` can be used to recursively look through folders
+and will split each file into many small pieces about 5 seconds in length. The variation that is caused here is the result of the script looking for a quite point to create a split. Where the split occurred (in seconds) will be added to the end of the file name. So, for example, if you have a wav file called `my_bird.wav` it will generate a number of files that could look something like `my_bird_0.wav` (i.e., starts at 0 seconds of the original file) or `my_bird_3.35.wav` (i.e., starts at 3.35 seconds of the original file).
+
+```
+python ./python/split_audio.py --input_folder small_audio --output_folder small_audio/split_audio
+```
+These files here should be treated as temporary.
+
+### Step 3. splitting recordings with `mixit`
 
 `mixit` has "models for Unsupervised Sound Separation of Bird Calls Using Mixture Invariant Training." We use this to take in a single recording and split it into multiple tracks, which will hopefully remove urban noise. See instructions here for downloading mixit as well as tensorflow.
 
@@ -77,7 +90,7 @@ An example of calling this script is:
 python ./python/mixit_audio.py --input_folder small_audio/CHIL-CTG-04232021
 ```
 
-### Step 3. Run through birdnet
+### Step 4. Run through birdnet
 
 Now that we have each file for a given visit separated out into different tracks, we can run all of them through birdnet. The detections for birdnet are in json format and look something like this.
 
@@ -100,7 +113,7 @@ and an example of the spectrogram that gets output is
 
 <div align="center"><img width="600" height="auto" src="./snips/CHIL-CTG-04232021/20210423_080000/20210423_080000_21s-24s.jpg" /></div>
 
-### Step 4. Stitching it all together
+### Step 5. Stitching it all together
 
 Really the only thing that needs to get pointed at is a folder to start from, everything else functions off of that. The script in the main repo called `do_all.py` does steps 1 through 3.
 
