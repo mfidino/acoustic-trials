@@ -14,6 +14,23 @@ cities = [os.path.basename(os.path.normpath(subdir)) for subdir in subdirs]
 # Print the list of subdirectories
 #print(subdirs)
 
+# rename folders so there are no spaces
+
+for sd in subdirs:
+	city = os.path.basename(sd)
+	# get files in this
+	sites = os.listdir(sd)
+	for site in sites:
+		directory = f"{args.input_folder}\\{city}\\{site}"
+		if " " in directory:
+			new_directory = directory.replace(' ', '_')
+			os.rename(directory, new_directory)
+		
+# repull these
+subdirs = [f.path for f in os.scandir(args.input_folder) if f.is_dir()]
+
+cities = [os.path.basename(os.path.normpath(subdir)) for subdir in subdirs]
+
 for sd in subdirs:
 	city = os.path.basename(sd)
 	# get files in this

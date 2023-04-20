@@ -13,6 +13,7 @@ args = parser.parse_args()
 path = args.input_folder
 
 outpath = args.output_folder
+
 def input_files(path):
     allowed_filetypes=['wav', 'flac', 'mp3', 'ogg', 'm4a']
     files = []
@@ -20,8 +21,21 @@ def input_files(path):
         for dir in dirs:
             print(dir)
         for f in flist:
-            if len(f.rsplit('.', 1)) > 1 and f.rsplit('.', 1)[1].lower() in allowed_filetypes:
+            if len(f.rsplit('.', 1)) > 1 and f.rsplit('.', 1)[1].lower() in allowed_filetypes and root == path:
                 files.append(os.path.join(root, f))
+
+    print(f'{len(files)} files found in {path}')
+    return files
+
+#def input_files(path):
+#    allowed_filetypes=['wav', 'flac', 'mp3', 'ogg', 'm4a']
+#    files = []
+#    for root, dirs, flist in os.walk(path):
+#        for dir in dirs:
+#            print(dir)
+#        for f in flist:
+#            if len(f.rsplit('.', 1)) > 1 and f.rsplit('.', 1)[1].lower() in allowed_filetypes:
+#                files.append(os.path.join(root, f))
 
     print(f'{len(files)} files found in {path}')
     return files
@@ -40,7 +54,8 @@ def chunk_wav(wav, cut_center, var_win_measure):
 for root, dirs, flist in os.walk(path):
      for dir in dirs:
          read_dir_path = os.path.join(root,dir)
-         write_dir_path = os.path.join(outpath,dir)
+         #write_dir_path = os.path.join(outpath,dir)
+         write_dir_path = os.path.join(outpath,os.path.relpath(read_dir_path, path))
          if not os.path.exists(write_dir_path):
              os.makedirs(write_dir_path)
          files = input_files(read_dir_path)
@@ -72,7 +87,8 @@ for root, dirs, flist in os.walk(path):
                     continue
                  stop = round(cut_points[i+1]*sr)
                  tmp_wav = wav[start:stop]
-                 tmp_name = f'{fname}_{cut_points[i]}.wav'
+                 tmp_name = f"{fname}_{format(cut_points[i],'.2f')}.wav"
                  write_path = os.path.join(write_dir_path, tmp_name)
                  sf.write(write_path, tmp_wav, sr)
             
+ 
