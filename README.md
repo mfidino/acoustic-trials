@@ -1,10 +1,30 @@
 # acoustic-trials
 
-NOTE: I put together a virtual environment with anaconda using python 3.9
+
+This repository is a where I have been trying to wrap my head around processing acoustic data collected from autonomous recording units (ARUs), along urbanization gradients in a few different cities that are a part of the Urban Wildlife Information Network. One tricky aspect of audio recordings in urban areas is that there can be substantial urban noise, which we want to try to remove to get better classifications via machine learning. 
+
+In a nutshell, the code here :
+1. Splits audio files into smaller pieces (thanks to Matt Weldy for sharing some code on how to do so)
+2. Uses [`mixit`](https://github.com/google-research/sound-separation) to separate sounds out of each smaller segment (i.e., remove urban noise and isolate different bird calls)
+3. Sends all those sound separated segments through [`birdnet`](https://github.com/kahst/BirdNET-Analyzer) to classify bird songs and calls.
+4. Save the output from birdnet, the small sound file, and a spectrogram for additional validation (if that is something you are interested in).
 
 
-Goals of this repo. We are going to take in a set of wave files, parse each one out into multiple audio tracks, and then run all of the tracks through birdnet.
 
+### Table of contents
+
+1. [Setup](#setup)
+2. [Step 1. Some initial cleaning of audio files](#step-1-some-initial-cleaning-of-audio-files)
+3. [Step 2. Splitting longer audio files into smaller pieces](#step-2-splitting-longer-audio-files-into-smaller-pieces)
+4. [Step 3. Separating recordings with `mixit`](#step-3-separating-recordings-with-mixit)
+5. [Step 4. Run through `birdnet`](#step-4-run-through-birdnet)
+6. [Step 5. Stitching it all together](#step-5-stitching-it-all-together)
+7. [Future improvements](#future-improvements)
+8. [Batch processing](#batch-processing)
+
+### Setup
+
+---
 
 Assuming you have anaconda installed, open up an anaconda prompt to create it with this:
 ```
@@ -26,21 +46,6 @@ pip install librosa
 pip install resampy
 ```
 
-
-### Table of contents
-
-1. [Setup](#setup)
-2. [Step 1. Some initial cleaning of audio files](#step-1-some-initial-cleaning-of-audio-files)
-3. [Step 2. Splitting longer audio files into smaller pieces](#step-2-splitting-longer-audio-files-into-smaller-pieces)
-4. [Step 3. Separating recordings with `mixit`](#step-3-splitting-recordings-with-mixit)
-5. [Step 4. Run through `birdnet`](#step-4-run-through-birdnet)
-6. [Step 5. Stitching it all together](#step-5-stitching-it-all-together)
-7. [Future improvements](#future-improvements)
-8. [Batch processing](#batch-processing)
-
-### Setup
-
----
 
 Right now, we are going to assume we have a sub-folder titled `small_audio`, which will contain the wave files. For this example I trimmed down the 10-15 minute files to just the first 30 seconds as a proof of concept.
 
@@ -75,9 +80,12 @@ These files here should be treated as temporary.
 
 NOTE: Folder hierarchy is maintained with this function, so if `--input_folder` is one folder that has data from multiple cities, each of which has multiple sites (e.g., `my_folder/<city name>/<site name>` then that hierarchy gets transferred along to `--output_folder`).
 
+
+[Back to table of contents ⤒](#table-of-contents)
+
 ### Step 3. Separating recordings with `mixit`
 
-`mixit` has "models for Unsupervised Sound Separation of Bird Calls Using Mixture Invariant Training." We use this to take in a single recording and split it into multiple tracks, which will hopefully remove urban noise. See instructions here for downloading mixit as well as tensorflow.
+`mixit` has "models for Unsupervised Sound Separation of Bird Calls Using Mixture Invariant Training." We use this to take in a single recording and split it into multiple tracks, which will hopefully remove urban noise. See instructions here for downloading mixit as well as tensorflow. One thing to note here is that you will need to be able to call `gsutil` from your command line to download `mixit` if you are following their directions.
 
 https://github.com/google-research/sound-separation/tree/master/models/bird_mixit
 
