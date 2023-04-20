@@ -27,11 +27,28 @@ pip install resampy
 ```
 
 
+### Table of contents
+
+1. [Setup](#setup)
+2. [Step 1. Some initial cleaning of audio files](#step-1-some-initial-cleaning-of-audio-files)
+3. [Step 2. Splitting longer audio files into smaller pieces](#step-2-splitting-longer-audio-files-into-smaller-pieces)
+4. [Step 3. Separating recordings with `mixit`](#step-3-splitting-recordings-with-mixit)
+5. [Step 4. Run through `birdnet`](#step-4-run-through-birdnet)
+6. [Step 5. Stitching it all together](#step-5-stitching-it-all-together)
+7. [Future improvements](#future-improvements)
+8. [Batch processing](#batch-processing)
+
 ### Setup
+
+---
 
 Right now, we are going to assume we have a sub-folder titled `small_audio`, which will contain the wave files. For this example I trimmed down the 10-15 minute files to just the first 30 seconds as a proof of concept.
 
+[Back to table of contents ⤒](#table-of-contents)
+
 ### Step 1. Some initial cleaning of audio files
+
+---
 
 The first ML processing step requires audio files to end in `.wav`. However, it seems like audioMoth recorders output files as `.WAV`. I made a little script to rename files if needed titled `WAV2wav.py`. This Python script renames all files with a ".WAV" extension to ".wav" in a specified folder. It uses the argparse module to parse command-line arguments and the os module to traverse the directory and rename the files.
 
@@ -39,6 +56,8 @@ The first ML processing step requires audio files to end in `.wav`. However, it 
 python ./python/WAV2wav.py --input_folder small_audio
 
 ```
+
+[Back to table of contents ⤒](#table-of-contents)
 
 ### Step 2. Splitting longer audio files into smaller pieces
 
@@ -50,11 +69,13 @@ issue. Given an `input_folder` (where you want the script to search for wav file
 and will split each file into many small pieces about 5 seconds in length. The variation that is caused here is the result of the script looking for a quite point to create a split. Where the split occurred (in seconds) will be added to the end of the file name. So, for example, if you have a wav file called `my_bird.wav` it will generate a number of files that could look something like `my_bird_0.wav` (i.e., starts at 0 seconds of the original file) or `my_bird_3.35.wav` (i.e., starts at 3.35 seconds of the original file).
 
 ```
-python ./python/split_audio.py --input_folder small_audio --output_folder small_audio/split_audio
+python ./python/split_audio.py --input_folder small_audio --output_folder split_audio
 ```
 These files here should be treated as temporary.
 
-### Step 3. splitting recordings with `mixit`
+NOTE: Folder hierarchy is maintained with this function, so if `--input_folder` is one folder that has data from multiple cities, each of which has multiple sites (e.g., `my_folder/<city name>/<site name>` then that hierarchy gets transferred along to `--output_folder`).
+
+### Step 3. Separating recordings with `mixit`
 
 `mixit` has "models for Unsupervised Sound Separation of Bird Calls Using Mixture Invariant Training." We use this to take in a single recording and split it into multiple tracks, which will hopefully remove urban noise. See instructions here for downloading mixit as well as tensorflow.
 
@@ -90,7 +111,12 @@ An example of calling this script is:
 python ./python/mixit_audio.py --input_folder small_audio/CHIL-CTG-04232021
 ```
 
-### Step 4. Run through birdnet
+NOTE: Check out [Extra things](#extra-things) below for how to run this on multiple folders at once.
+
+
+[Back to table of contents ⤒](#table-of-contents)
+
+### Step 4. Run through `birdnet`
 
 Now that we have each file for a given visit separated out into different tracks, we can run all of them through birdnet. The detections for birdnet are in json format and look something like this.
 
@@ -113,6 +139,8 @@ and an example of the spectrogram that gets output is
 
 <div align="center"><img width="600" height="auto" src="./snips/CHIL-CTG-04232021/20210423_080000/20210423_080000_21s-24s.jpg" /></div>
 
+[Back to table of contents ⤒](#table-of-contents)
+
 ### Step 5. Stitching it all together
 
 Really the only thing that needs to get pointed at is a folder to start from, everything else functions off of that. The script in the main repo called `do_all.py` does steps 1 through 3.
@@ -121,7 +149,9 @@ Really the only thing that needs to get pointed at is a folder to start from, ev
 python do_all.py --input_folder small_audio/CHIL-CTG-04232021
 ```
 
-### Moving forward
+[Back to table of contents ⤒](#table-of-contents)
+
+### Future improvements
 
 There are quite a few variables throughout this that are hard-coded, or pulled off of the `--input_folder` argument. When interfacing with the UWIN web app a number of these bits of information can actually be pulled from specific tables in the database, namely to date & time of a visit to a given location as well as that locations coordinates. I've also used a file naming structure for the folders that is similar to the way the web app names buckets on google cloud. Finally, after the ML outputs are collected we really don't need to store all of the separated 'tracks.' What we really just need are:
 
@@ -133,4 +163,12 @@ I built this script with the thought in mind that the function would get called 
 keep track of whether or not a given batch of files have completed the ML pipeline so that we can ensure they are not sent through it again (as that could add up). 
 
 I am positive there is other stuff I am missing here, but at a minimum these scripts are at least a proof of concept that this pipeline works.
+
+[Back to table of contents ⤒](#table-of-contents)
+
+### Batch processing
+
+Since I've been testing this out on my local computer I also wanted a way to batch process more than one folder (e.g., all the sub-folders within another audio folder). The script
+
+[Back to table of contents ⤒](#table-of-contents)
 
