@@ -35,6 +35,8 @@ for input_file in input_files:
     # get the name of the output file
     name_without_ext = os.path.splitext(os.path.basename(input_file))[0]
     output_file = os.path.join(output_folder,basename, name_without_ext, os.path.basename(input_file))
+    if not os.path.exists(os.path.join(output_folder,basename, name_without_ext)):
+        os.makedirs(os.path.join(output_folder,basename, name_without_ext))
     print('output')
     print(output_file)
     # call the process_wav script with the current input and output file names
