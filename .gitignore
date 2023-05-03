@@ -139,3 +139,8 @@ dmypy.json
 /split_audio
 
 /snips
+
+/mixit_snips/output
+/mixit_snips/TEMP
+
+/no_mixit_snips/split_audio
