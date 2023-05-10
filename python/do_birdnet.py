@@ -11,8 +11,6 @@ import matplotlib.pyplot as plt
 import csv
 import sys
 
-SAMPLE_RATE = 0
-
 parser = argparse.ArgumentParser(description="Process all .wav files in a folder and its sub-folders.")
 parser.add_argument("--input_folder", type=str, help="the folder containing the input files")
 parser.add_argument("--output_folder", type = str, default = "snips", help="the folder to save the acoustic files, spectrograms, and optional csv.")
@@ -65,7 +63,7 @@ for entry in os.listdir(input_folder):
     print(entry)
     if entry == 'output':
         continue
-    if entry in ['ATGA', 'CHIL', 'IOIO', 'JAMS', 'NACA','OCCA']:
+    if entry in ['ATGA', 'CHIL', 'IOIO', 'JAMS', 'NACA','OCCA', 'PHAZ','SCUT','SEWA','SLMO','TOON']:
         continue
     if os.path.isdir(entry_path):
         for root, dirs, files in os.walk(entry_path):
@@ -99,10 +97,6 @@ for entry in os.listdir(input_folder):
                     )
                     recording.analyze()
 
-                    tmp_audio = pydub.AudioSegment.from_file(input_file)
-                    SAMPLE_RATE = tmp_audio.frame_rate
-                    if(SAMPLE_RATE != 48000):
-                        continue
         
                     # save detections as spectrogram image
                     #recording.extract_detections_as_spectrogram(directory=output_file_dir)
@@ -139,16 +133,16 @@ for entry in os.listdir(input_folder):
                             end_sec = int(best_end + 0)
                         else:
                             end_sec = int(recording.duration)
-
+                        tmp_audio = pydub.AudioSegment.from_file(input_file)
 
                         extract_array = recording.ndarray[
-                            start_sec * SAMPLE_RATE : end_sec * SAMPLE_RATE
+                            start_sec * tmp_audio.frame_rate : end_sec * tmp_audio.frame_rate
                         ]
                         channels = 1
                         data = np.int16(extract_array * 2**15)  # Normalized to -1, 1
                         audio = pydub.AudioSegment(
                             data.tobytes(),
-                            frame_rate=SAMPLE_RATE,
+                            frame_rate=tmp_audio.frame_rate,
                             sample_width=2,
                             channels=channels,
                         )
@@ -159,7 +153,7 @@ for entry in os.listdir(input_folder):
                         audio_path = f"{tmp_dir}/{recording.filestem}_{start_sec}s-{end_sec}s.wav"
                         audio.export(audio_path, format="wav")
                         jpg_path = f"{tmp_dir}/{recording.filestem}_{start_sec}s-{end_sec}s.jpg"
-                        plt.specgram(extract_array, Fs=SAMPLE_RATE,cmap="nipy_spectral") 
+                        plt.specgram(extract_array, Fs=tmp_audio.frame_rate,cmap="nipy_spectral") 
                         plt.ylim(top=14000)
                         plt.ylabel("frequency kHz")
                         plt.title(f"{recording.filename} ({start_sec}s - {end_sec}s). {(best_common_name)}({(round(highest_confidence,2))})", fontsize=10)
