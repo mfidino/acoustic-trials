@@ -316,6 +316,7 @@ comp_results <- split(
 )
 # look at those that both found
 
+
 hist(
   comp_results$both_ID$diff,
   xlab = "Difference in BirdNET classification accuracy for mixit vs. no mixit seperation",
@@ -347,7 +348,38 @@ for(i in 1:nrow(lc)){
 
 lc <- lc[!is.na(lc$link),]
 
-windows(6,6)
+lc_long <- dplyr::inner_join(
+  n1,
+  lc[,c("built.area","link")],
+  by= c("site" = "link")
+)
+lc_long <- lc_long %>%
+  dplyr::group_by(site,city) %>%
+  dplyr::summarise(
+    built.area = mean(built.area),
+    mean_dB = mean(mean_dB)
+  )
+
+m1 <- lm(
+  mean_dB ~ built.area, data = lc_long
+)
+
+mpred <- predict(
+  m1,
+  newdata = data.frame(built.area = seq(0,1, by = 0.05)),
+  interval = "confidence"
+)
+
+mpred2 <- predict(
+  m1,
+  newdata = data.frame(built.area = seq(0,1, by = 0.05)),
+  interval = "prediction"
+)
+
+
+tiff("./iuwc_plots/dB_by_built_area.tiff",
+     height = 6, width = 6, units = "in",
+     res = 600, compression = "lzw")
 par(mar = c(6,6,1,1))
 bbplot::blank(xlim = c(0,1), ylim = c(80,120), bty = "l")
 bbplot::axis_blank(1)
@@ -359,34 +391,441 @@ bbplot::axis_text("Proportion built area around site",
 bbplot::axis_text("Average dB across surveys at site",
                   cex = 1.4, line = 3.25, side = 2)
 
+
+
+bbplot::ribbon(
+  x = seq(0,1,0.05),
+  y = mpred[,-1],
+  col = "#009FB7",
+  alpha = 0.75
+)
+
+lines(
+  x = seq(0,1,0.05),
+  y = mpred[,1],
+  col = "#696773",
+  lwd = 5
+)
+
+
+
 points(
-  x = lc$built.area,
-  y = lc$mean,
+  x = lc_long$built.area,
+  y = lc_long$mean_dB,
   pch = 21,
-  bg = "gray50",
+  bg = "#FED766",
   cex = 1.7
 )
 
-m1 <- lm(
-  mean ~ built.area,
-  data = lc
+dev.off()
+
+
+
+# compare species richness at each site
+#  with and without mixit.
+
+
+
+from_mixit <-
+  dplyr::bind_rows(
+    comp_results$both_ID, comp_results$mixit
+  ) %>%
+  dplyr::group_by(site, city, date) %>%
+  dplyr::summarise(
+    nsp_mixit = length(unique(common_name))
+  )
+
+not_from_mixit <- dplyr::bind_rows(
+  comp_results$both_ID, comp_results$`no mixit`
+) %>%
+  dplyr::group_by(site,city, date) %>%
+  dplyr::summarise(
+    nsp_nomixit = length(unique(common_name))
+  )
+
+all_sites <- dplyr::bind_rows(
+  from_mixit[,c("site","city","date")],
+  not_from_mixit[,c("site","city","date")]
 )
 
-m1 <- lme4::lmer(
-  mean ~ built.area + (1|city),
-  data = lc
+all_sites <- dplyr::distinct(all_sites)
+all_sites <- dplyr::left_join(
+  all_sites,
+  from_mixit,
+  by = c("site","city","date")
+)
+all_sites <- dplyr::left_join(
+  all_sites,
+  no_mixit[,c("site","date", "nsp_nomixit")],
+  by = c("site","date")
 )
 
-mu_sound <- n1 %>%
-  dplyr::group_by(site) %>%
-  dplyr::summarise(mean = mean(mean_dB))
+sum(is.na(all_sites$nsp_mixit))
+sum(is.na(all_sites$nsp_nomixit))
+all_sites$nsp_nomixit[is.na(all_sites$nsp_nomixit)] <- 0
 
-lc <- dplyr::inner_join(
+all_sites$diff <- all_sites$nsp_mixit - all_sites$nsp_nomixit
+
+fas <- table(all_sites$diff)
+
+
+windows(6,6)
+tiff(
+  "./iuwc_plots/sound_sep_difference.tiff",
+  height = 6,
+  width = 6,
+  units = "in",
+  res = 600,
+  compression = "lzw"
+)
+par(mar = c(8,6,3,1), lheight = 0.5)
+{
+bbplot::blank(
+  xlim = c(-15,15),
+  ylim = c(-5, 200),
+  xaxs = "i",
+  bty = "l",
+  yaxs = "i"
+)
+box(which = "plot", bty = "l", lwd = 2)
+
+bbplot::axis_blank(1, lwd = 2)
+bbplot::axis_text(side = 1, line = 1, cex = 1.2)
+
+bbplot::axis_text(
+  "Difference in species richness per survey at sites\n
+    when sound separation is and is not\n
+    used before BirdNET",
+  side = 1,
+  line = 5.5,
+  cex = 1.3
+)
+bbplot::axis_blank(2, lwd =2, at = )
+bbplot::axis_text(side = 2, line = 1, cex = 1.2,las = 2)
+
+bbplot::axis_text("Frequency",side = 2, cex = 1.3, line = 4 )
+u <- par("usr")
+
+par(xpd = NA)
+text(
+  x = -8,
+  y = 210,
+  labels = "Sound separation worse"
+)
+text(
+  x = 8,
+  y = 210,
+  labels = "Sound separation better"
+)
+
+
+for(i in 1:length(fas)){
+  x <- as.numeric(names(fas)[i])
+  rect(
+    xleft = x-0.5,
+    ybottom = 0,
+    xright = x+0.5,
+    ytop = fas[i],
+    col = "gray80"
+  )
+}
+lines(
+  x = c(0,0),
+  y = u[3:4],
+  lty = 2,
+  lwd = 2
+)
+}
+dev.off()
+
+# compare across multiple surveys
+
+from_mixit_all <-
+  dplyr::bind_rows(
+    comp_results$both_ID, comp_results$mixit
+  ) %>%
+  dplyr::group_by(site, city) %>%
+  dplyr::summarise(
+    nsp_mixit = length(unique(common_name))
+  )
+
+not_from_mixit_all <- dplyr::bind_rows(
+  comp_results$both_ID, comp_results$`no mixit`
+) %>%
+  dplyr::group_by(site,city) %>%
+  dplyr::summarise(
+    nsp_nomixit = length(unique(common_name))
+  )
+
+all_sites <- dplyr::bind_rows(
+  from_mixit[,c("site","city")],
+  not_from_mixit[,c("site","city")]
+)
+
+all_sites <- dplyr::distinct(all_sites)
+all_sites <- dplyr::left_join(
+  all_sites,
+  from_mixit_all,
+  by = c("site","city")
+)
+all_sites <- dplyr::left_join(
+  all_sites,
+  not_from_mixit_all[,c("site", "nsp_nomixit")],
+  by = c("site")
+)
+
+sum(is.na(all_sites$nsp_mixit))
+sum(is.na(all_sites$nsp_nomixit))
+all_sites$nsp_nomixit[is.na(all_sites$nsp_nomixit)] <- 0
+
+all_sites$diff <- all_sites$nsp_mixit - all_sites$nsp_nomixit
+
+fas <- table(all_sites$diff)
+
+
+windows(6,6)
+tiff(
+  "./iuwc_plots/sound_sep_difference_across_surveys.tiff",
+  height = 6,
+  width = 6,
+  units = "in",
+  res = 600,
+  compression = "lzw"
+)
+par(mar = c(8,6,3,1), lheight = 0.5)
+{
+  bbplot::blank(
+    xlim = c(-35,35),
+    ylim = c(-0.25, 10),
+    xaxs = "i",
+    bty = "l",
+    yaxs = "i"
+  )
+  box(which = "plot", bty = "l", lwd = 2)
+
+  bbplot::axis_blank(1, lwd = 2)
+  bbplot::axis_text(side = 1, line = 1, cex = 1.2)
+
+  bbplot::axis_text(
+    "Difference in species richness after 5 surveys\n
+    at sites when sound separation is and is not\n
+    used before BirdNET",
+    side = 1,
+    line = 5.5,
+    cex = 1.3
+  )
+  bbplot::axis_blank(2, lwd =2, at = )
+  bbplot::axis_text(side = 2, line = 1, cex = 1.2,las = 2)
+
+  bbplot::axis_text("Frequency",side = 2, cex = 1.3, line = 4 )
+  u <- par("usr")
+
+  par(xpd = NA)
+  text(
+    x = -18,
+    y = 11,
+    labels = "Sound separation worse"
+  )
+  text(
+    x = 18,
+    y = 11,
+    labels = "Sound separation better"
+  )
+
+
+  for(i in 1:length(fas)){
+    x <- as.numeric(names(fas)[i])
+    rect(
+      xleft = x-0.5,
+      ybottom = 0,
+      xright = x+0.5,
+      ytop = fas[i],
+      col = "gray80"
+    )
+  }
+  lines(
+    x = c(0,0),
+    y = u[3:4],
+    lty = 2,
+    lwd = 2
+  )
+}
+dev.off()
+
+# look at correlation between species richness
+#  and urbanization
+
+model_dat <- dplyr::inner_join(
+  all_sites,
   lc,
-  mu_sound,
-  by = c("link" = "site")
+  by = c("site" = "link")
 )
 
+# add on noise
+avg_noise <- n1 %>%
+  dplyr::group_by(site) %>%
+  dplyr::summarise(mean_dB = mean(mean_dB))
+
+model_dat <- dplyr::inner_join(
+  model_dat,
+  avg_noise,
+  by = "site"
+)
+
+
+
+mm <- model_dat[,c(
+  "nsp_mixit", "nsp_nomixit",
+  "built.area", "mean_dB")]
+mm$built.area <- as.numeric(
+  scale(mm$built.area))
+
+mm$mean_dB <- as.numeric(
+  scale(mm$mean_dB)
+)
+m1 <- glm(
+  nsp_mixit ~ built.area + mean_dB,
+  data = mm,
+  family = poisson
+)
+
+m2 <- glm(
+  nsp_nomixit ~ built.area + mean_dB,
+  data = mm,
+  family = poisson
+)
+
+
+
+pred_data <- data.frame(
+  built.area = seq(0,1,0.001),
+  mean_dB = 0
+)
+
+pds <- pred_data
+pds$built.area <- (
+  pds$built.area - mean(model_dat$built.area)) /
+  sd(model_dat$built.area)
+
+m1_pred <- predict.glm(
+  m1,
+  newdata = pds,
+  type = "link",
+  se.fit = TRUE
+)
+m1_pred <- data.frame(
+  fit = exp(
+    m1_pred$fit
+  ),
+  lower = exp(
+    qnorm(
+      0.025,
+      m1_pred$fit,
+      m1_pred$se.fit
+    )
+  ),
+  upper =  exp(
+    qnorm(
+      0.975,
+      m1_pred$fit,
+      m1_pred$se.fit
+    )
+  )
+)
+m2_pred <- predict.glm(
+  m2,
+  newdata = pds,
+  type = "link",
+  se.fit = TRUE
+)
+
+m2_pred <- data.frame(
+  fit = exp(
+    m2_pred$fit
+  ),
+  lower = exp(
+    qnorm(
+      0.025,
+      m2_pred$fit,
+      m2_pred$se.fit
+    )
+  ),
+  upper =  exp(
+    qnorm(
+      0.975,
+      m2_pred$fit,
+      m2_pred$se.fit
+    )
+  )
+)
+
+
+tiff(
+  "./iuwc_plots/species_richness_built.tiff",
+  height = 6,
+  width = 6,
+  compression = "lzw",
+  res = 600,
+  units = "in"
+)
+par(mar = c(6,6,1,1))
+{
+bbplot::blank(
+  xlim = c(0,1),
+  ylim = c(10, 35),
+  xaxs = "i",
+  yaxs = "i"
+)
+box( bty = "l", lwd = 2)
+bbplot::axis_blank(side = 1, lwd = 2)
+bbplot::axis_blank(side = 2, lwd = 2)
+
+bbplot::axis_text(side = 1, line = 0.8, cex = 1.3)
+bbplot::axis_text(side = 2, line = 0.8, cex = 1.3, las = 2)
+
+bbplot::axis_text("Proportion built area around sites",
+                  side = 1, cex = 1.5, line = 3)
+bbplot::axis_text("Species richness",
+                  side = 2, cex = 1.5, line = 3.2)
+
+my_pal <- c("#324376","#D33F49")
+
+bbplot::ribbon(
+  x = pred_data$built.area,
+  y = m1_pred[,-1],
+  col = my_pal[1],
+  alpha = 0.5
+)
+
+lines(
+  x = pred_data$built.area,
+  y = m1_pred[,1],
+  col = my_pal[1],
+  lwd = 3
+)
+bbplot::ribbon(
+  x = pred_data$built.area,
+  y = m2_pred[,-1],
+  col = my_pal[2],
+  alpha = 0.5
+)
+lines(
+  x = pred_data$built.area,
+  y = m2_pred[,1],
+  col = my_pal[2],
+  lwd = 3
+)
+
+legend(
+  "topright",
+  c("with sound separation",
+    "without sound separation"),
+  bty = "n",
+  fill = my_pal,
+  cex = 1.1
+)
+}
+dev.off()
 # look at it by species
 both_ID <- comp_results$both_ID
 spc <- both_ID %>%
