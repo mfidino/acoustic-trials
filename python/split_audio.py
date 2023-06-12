@@ -65,7 +65,7 @@ for root, dirs, flist in os.walk(path):
              wav, sr = sf.read(f)
              clip_length_s = len(wav)/sr
              variance_window = 0.5 
-             cut_window_length = 5
+             cut_window_length = 3
              num_cuts = clip_length_s / cut_window_length
              if (num_cuts - round(num_cuts) ) < 0.5: 
                  num_cuts = round(num_cuts) - 1
