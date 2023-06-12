@@ -81,8 +81,6 @@ for entry in os.listdir(input_folder):
    entry_path = os.path.join(input_folder, entry)
    if entry == 'output':
        continue
-   if entry in ['ATGA', 'CHIL', 'IOIO', 'JAMS', 'NACA','OCCA']:
-       continue
    if os.path.isdir(entry_path):
    	for root, dirs, files in os.walk(entry_path):
            for file in files:
